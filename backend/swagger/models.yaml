@@ -1,0 +1,231 @@
+schemas:
+  User:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      username:
+        type: string
+      fullname:
+        type: string
+  Post:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      title:
+        type: string
+      image_url:
+        type: string
+        nullable: true
+      episode_no:
+        type: number
+      episode_title:
+        type: string
+      clip_time:
+        type: integer
+      summary:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time
+        nullable: true
+      deleted_at:
+        type: string
+        format: date-time
+        nullable: true
+      created_by:
+        type: string
+        format: uuid
+      updated_by:
+        type: string
+        format: uuid
+        nullable: true
+      deleted_by:
+        type: string
+        format: uuid
+        nullable: true
+      author:
+        $ref: '#/components/schemas/User'
+      editor:
+        $ref: '#/components/schemas/User'
+        nullable: true
+      deleter:
+        $ref: '#/components/schemas/User'
+        nullable: true
+
+  PostDetailResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: Success
+      message:
+        type: string
+        example: Post operation successful.
+      data:
+        $ref: '#/components/schemas/Post'
+
+  PaginatedPostResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: Success
+      message:
+        type: string
+        example: Posts fetched successfully.
+      data:
+        type: array
+        items:
+          $ref: '#/components/schemas/Post'
+      meta:
+        type: object
+        properties:
+          total:
+            type: integer
+            example: 100
+          page:
+            type: integer
+            example: 1
+          limit:
+            type: integer
+            example: 10
+
+  # --- AUTH ---
+  LoginRequest:
+    type: object
+    properties:
+      emailOrUsername:
+        type: string
+        example: "johndoe"
+      password:
+        type: string
+        format: password
+        example: "password123"
+    required:
+      - emailOrUsername
+      - password
+  RegisterRequest:
+    type: object
+    properties:
+      fullname:
+        type: string
+        example: "John Doe"
+      username:
+        type: string
+        example: "johndoe"
+      email:
+        type: string
+        format: email
+        example: "john.doe@example.com"
+      password:
+        type: string
+        format: password
+        example: "password123"
+    required:
+      - fullname
+      - username
+      - email
+      - password
+  ResetPasswordRequest:
+    type: object
+    properties:
+      old_password:
+        type: string
+        format: password
+      new_password:
+        type: string
+        format: password
+    required:
+      - old_password
+      - new_password
+
+  # --- USER ---
+  UserUpdateRequest:
+    type: object
+    properties:
+      fullname:
+        type: string
+        example: "John Doe"
+      username:
+        type: string
+        example: "johndoe"
+      email:
+        type: string
+        format: email
+        example: "john.doe@example.com"
+      bio:
+        type: string
+        example: "Software Engineer"
+      headline:
+        type: string
+        example: "Building the future, one line of code at a time."
+      remove_avatar:
+        type: boolean
+        description: "Set to true to remove the user's avatar."
+      remove_banner:
+        type: boolean
+        description: "Set to true to remove the user's banner."
+
+  # --- RESPONSES ---
+  UserDetailResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: "success"
+      message:
+        type: string
+        example: "User details fetched successfully."
+      data:
+        $ref: '#/components/schemas/User'
+  PaginatedUserResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: "success"
+      message:
+        type: string
+        example: "Users fetched successfully."
+      data:
+        type: array
+        items:
+          $ref: '#/components/schemas/User'
+      meta:
+        type: object
+        properties:
+          total:
+            type: integer
+            example: 100
+          page:
+            type: integer
+            example: 1
+          limit:
+            type: integer
+            example: 10
+
+  SuccessResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: "success"
+      message:
+        type: string
+        example: "Operation was successful."
+  ErrorResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: "error"
+      message:
+        type: string
+        example: "An error occurred."
