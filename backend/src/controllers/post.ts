@@ -5,34 +5,7 @@ import { prisma } from "../connections/prisma";
 import { redis } from "../connections/redis";
 import { generateContent } from "../utils/gemini";
 import { appError } from "../utils/error";
-
-const WHERE_CLAUSE: any = {
-  deleted_at: null,
-};
-const POST_SELECT_FIELDS = {
-  id: true,
-  title: true,
-  image_url: true,
-  episode_no: true,
-  episode_title: true,
-  clip_time: true,
-  summary: true,
-  created_at: true,
-  updated_at: true,
-  deleted_at: true,
-  created_by: true,
-  updated_by: true,
-  deleted_by: true,
-  author: {
-    select: { id: true, username: true, fullname: true },
-  },
-  editor: {
-    select: { id: true, username: true, fullname: true },
-  },
-  deleter: {
-    select: { id: true, username: true, fullname: true },
-  },
-};
+import { WHERE_CLAUSE, POST_SELECT_FIELDS } from "../utils/schema";
 
 export async function getPosts(
   req: Request,
@@ -111,10 +84,12 @@ export async function getPostById(
 ) {
   try {
     const { id } = req.params;
+    WHERE_CLAUSE.id = id;
     const post = await prisma.post.findUnique({
       select: POST_SELECT_FIELDS,
-      where: { id },
+      where: WHERE_CLAUSE,
     });
+    console.log("post", post);
     res.status(200).json({
       status: "Success",
       message: "Fetch post success!",
@@ -155,14 +130,14 @@ export async function createPost(
     const imagePath = resolve(uploadsDir, "image", imageFile.fileName);
     await writeFile(imagePath, imageFile.fileBuffer);
     dataToCreate.image_url = imageFile.fileName;
-    const newPost = await prisma.post.create({
+    const createdPost = await prisma.post.create({
       data: dataToCreate,
       select: POST_SELECT_FIELDS,
     });
     res.status(201).json({
       status: "Success",
       message: "Post created successfully",
-      data: parsedAiResponse,
+      data: createdPost,
     });
   } catch (err) {
     next(err);

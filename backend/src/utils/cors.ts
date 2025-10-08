@@ -3,10 +3,10 @@ import { config } from "dotenv";
 
 config();
 
-const CORS_URL = process.env.CORS_URL as string;
+const ORIGIN_URL = process.env.ORIGIN_URL as string;
 
 export const corsMiddleware = cors({
-  origin: [CORS_URL],
+  origin: [ORIGIN_URL],
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   credentials: true,
 });

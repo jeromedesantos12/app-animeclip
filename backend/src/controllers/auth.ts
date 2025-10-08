@@ -5,19 +5,7 @@ import { appError } from "../utils/error";
 import { signToken } from "../utils/jwt";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
 import { authrizationUrl, oauth2Client } from "../utils/google";
-
-const WHERE_CLAUSE: any = {
-  deleted_at: null,
-};
-const USER_SELECT_FIELDS = {
-  id: true,
-  username: true,
-  fullname: true,
-  email: true,
-  created_at: true,
-  updated_at: true,
-  deleted_at: true,
-};
+import { WHERE_CLAUSE, AUTH_SELECT_FIELDS } from "../utils/schema";
 
 export function googleAuth(req: Request, res: Response, next: NextFunction) {
   res.redirect(authrizationUrl);
@@ -168,7 +156,7 @@ export async function registerAuth(
     delete WHERE_CLAUSE.OR;
     WHERE_CLAUSE.id = create.id;
     const register = await prisma.user.findUnique({
-      select: USER_SELECT_FIELDS,
+      select: AUTH_SELECT_FIELDS,
       where: WHERE_CLAUSE,
     });
     res.status(201).json({
@@ -184,11 +172,13 @@ export async function registerAuth(
 export function verifyAuth(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = (req as any).user.id;
+    const userName = (req as any).user.username;
     res.status(200).json({
       status: "Success",
       message: "Verify success!",
       data: {
         id: userId,
+        username: userName,
       },
     });
   } catch (err) {

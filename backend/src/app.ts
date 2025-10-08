@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(corsMiddleware);
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/uploads", express.static(resolve(process.cwd(), "uploads")));
+app.use("/api/v1/uploads", express.static(resolve(process.cwd(), "uploads")));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(router);

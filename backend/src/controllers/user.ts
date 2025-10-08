@@ -3,21 +3,7 @@ import { rename, unlink, writeFile } from "fs/promises";
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../connections/prisma";
 import { redis } from "../connections/redis";
-
-const WHERE_CLAUSE: any = {
-  deleted_at: null,
-};
-const USER_SELECT_FIELDS = {
-  id: true,
-  username: true,
-  fullname: true,
-  email: true,
-  avatar_url: true,
-  bio: true,
-  created_at: true,
-  updated_at: true,
-  deleted_at: true,
-};
+import { WHERE_CLAUSE, USER_SELECT_FIELDS } from "../utils/schema";
 
 export async function getUsers(
   req: Request,
