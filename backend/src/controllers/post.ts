@@ -2,10 +2,9 @@ import { resolve } from "path";
 import { rename, writeFile } from "fs/promises";
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../connections/prisma";
-import { redis } from "../connections/redis";
 import { generateContent } from "../utils/gemini";
 import { appError } from "../utils/error";
-import { WHERE_CLAUSE, POST_SELECT_FIELDS } from "../utils/schema";
+import { POST_SELECT_FIELDS } from "../utils/schema";
 
 export async function getPosts(
   req: Request,
@@ -27,8 +26,10 @@ export async function getPosts(
   } = req.query;
   const skip = (page - 1) * limit;
   try {
+    const logId = (req as any).user.id;
+    const where: any = { deleted_at: null, created_by: logId };
     if (search) {
-      WHERE_CLAUSE.OR = [
+      where.OR = [
         {
           title: {
             contains: search as string,
@@ -44,7 +45,7 @@ export async function getPosts(
       ];
     }
     const posts = await prisma.post.findMany({
-      where: WHERE_CLAUSE,
+      where,
       select: POST_SELECT_FIELDS,
       take: limit,
       skip,
@@ -52,20 +53,11 @@ export async function getPosts(
         [sort]: order,
       },
     });
-    let results = null;
-    const total = await prisma.post.count({ where: WHERE_CLAUSE });
-    const key = "getPosts:" + search + page + limit + sort + order + ":active";
-    const value = await redis.get(key);
-    if (value) {
-      results = JSON.parse(value);
-    } else {
-      results = posts;
-      await redis.set(key, JSON.stringify(results), { EX: 300 });
-    }
+    const total = await prisma.post.count({ where });
     res.status(200).json({
       status: "Success",
       message: "Fetch posts success!",
-      data: results,
+      data: posts,
       meta: {
         total,
         page,
@@ -84,12 +76,12 @@ export async function getPostById(
 ) {
   try {
     const { id } = req.params;
-    WHERE_CLAUSE.id = id;
+    const logId = (req as any).user.id;
+    const where: any = { id, deleted_at: null, created_by: logId };
     const post = await prisma.post.findUnique({
       select: POST_SELECT_FIELDS,
-      where: WHERE_CLAUSE,
+      where,
     });
-    console.log("post", post);
     res.status(200).json({
       status: "Success",
       message: "Fetch post success!",
@@ -150,15 +142,15 @@ export async function deletePost(
   next: NextFunction
 ) {
   const { id } = req.params;
-  const userLog = (req as any).user.id;
-  WHERE_CLAUSE.id = id;
+  const logId = (req as any).user.id;
+  const where: any = { id, deleted_at: null, created_by: logId };
   const model = (req as any).model;
   const oldImageName = model.image_url;
   const uploadsDir = resolve(process.cwd(), "uploads", "post");
   const tempTimestamp = Date.now();
   let updatedData: Record<string, any> = {
     deleted_at: new Date(),
-    deleted_by: userLog,
+    deleted_by: logId,
   };
   try {
     if (oldImageName && !oldImageName.startsWith("temp_")) {
@@ -169,9 +161,11 @@ export async function deletePost(
       updatedData.image_url = newName;
     }
     const deletedPost = await prisma.post.update({
-      where: WHERE_CLAUSE,
+      where,
       data: updatedData,
     });
+
+    console.log(deletedPost.created_by);
     res.status(200).json({
       status: "Success",
       message: "Post soft deleted and file renamed for cleanup.",
@@ -188,14 +182,15 @@ export async function restorePost(
   next: NextFunction
 ) {
   const { id } = req.params;
-  WHERE_CLAUSE.id = id;
-  WHERE_CLAUSE.deleted_at = { not: null };
+  const logId = (req as any).user.id;
+  const where: any = { id, deleted_at: { not: null } };
   const model = (req as any).model;
   const oldImageName = model?.image_url;
   const uploadsDir = resolve(process.cwd(), "uploads", "post");
   try {
     let updatedData: Record<string, any> = {
       deleted_at: null,
+      created_by: logId,
     };
     if (oldImageName?.startsWith("temp_")) {
       const oldPath = resolve(uploadsDir, oldImageName);
@@ -205,7 +200,7 @@ export async function restorePost(
       updatedData.image_url = newName;
     }
     const restoredPost = await prisma.post.update({
-      where: WHERE_CLAUSE,
+      where,
       data: updatedData,
     });
     return res.status(200).json({

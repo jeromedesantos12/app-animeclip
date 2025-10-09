@@ -27,14 +27,16 @@ export function Card({
         className
       )}
     >
-      <div className="flex flex-col gap-1">
-        <h2 className={cn("text-lg font-semibold", titleClassName)}>{title}</h2>
-        <p
+      <div className="flex flex-col gap-1 text-foreground">
+        <h2
           className={cn(
-            "text-lg text-secondary-foreground",
-            descriptionClassName
+            "text-lg font-semibold text-background",
+            titleClassName
           )}
         >
+          {title}
+        </h2>
+        <p className={cn("text-lg text-background", descriptionClassName)}>
           {description}
         </p>
       </div>

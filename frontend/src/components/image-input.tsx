@@ -15,7 +15,7 @@ export default function ImageInput({
     <div className="flex flex-col items-center justify-center w-full">
       <label
         htmlFor="dropzone-file"
-        className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+        className="flex flex-col items-center justify-center w-full h-64 border border-border/50 rounded-lg cursor-pointer backdrop-blur-lg shadow-xl hover:bg-foreground/10 duration-300"
       >
         {imagePreview ? (
           <div className="relative w-full h-full">
@@ -29,7 +29,7 @@ export default function ImageInput({
         ) : (
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
             <svg
-              className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
+              className="w-8 h-8 mb-4 text-muted-foreground"
               aria-hidden="true"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"

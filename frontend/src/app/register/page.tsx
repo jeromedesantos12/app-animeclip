@@ -39,11 +39,11 @@ export default function RegisterPage() {
     const { fullname, username, email, password } = formData;
     try {
       await registerAuth({ fullname, username, email, password });
+      toast.success("User registered successfully!");
     } catch (err) {
       toast.error(extractAxiosError(err));
     } finally {
       reset();
-      toast.success("User registered successfully!");
       router.push("/login");
     }
   }

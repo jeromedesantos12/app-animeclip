@@ -2,8 +2,7 @@ import { resolve } from "path";
 import { rename, unlink, writeFile } from "fs/promises";
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../connections/prisma";
-import { redis } from "../connections/redis";
-import { WHERE_CLAUSE, USER_SELECT_FIELDS } from "../utils/schema";
+import { USER_SELECT_FIELDS } from "../utils/schema";
 
 export async function getUsers(
   req: Request,
@@ -23,10 +22,11 @@ export async function getUsers(
     sort?: string;
     order?: string;
   } = req.query;
+  const skip = (page - 1) * limit;
   try {
-    const skip = (page - 1) * limit;
+    const where: any = { deleted_at: null };
     if (search) {
-      WHERE_CLAUSE.OR = [
+      where.OR = [
         {
           username: {
             contains: search as string,
@@ -42,7 +42,7 @@ export async function getUsers(
       ];
     }
     const users = await prisma.user.findMany({
-      where: WHERE_CLAUSE,
+      where,
       select: USER_SELECT_FIELDS,
       take: limit,
       skip,
@@ -50,20 +50,11 @@ export async function getUsers(
         [sort]: order,
       },
     });
-    let results = null;
-    const total = await prisma.user.count({ where: WHERE_CLAUSE });
-    const key = "getUsers:" + search + page + limit + sort + order + ":active";
-    const value = await redis.get(key);
-    if (value) {
-      results = JSON.parse(value);
-    } else {
-      results = users;
-      await redis.set(key, JSON.stringify(results), { EX: 300 });
-    }
+    const total = await prisma.user.count({ where });
     res.status(200).json({
       status: "Success",
       message: "Fetch users success!",
-      data: results,
+      data: users,
       meta: {
         total,
         page,
@@ -81,11 +72,11 @@ export async function getUserById(
   next: NextFunction
 ) {
   const { id } = req.params;
-  WHERE_CLAUSE.id = id;
   try {
+    const where: any = { id, deleted_at: null };
     const user = await prisma.user.findUnique({
       select: USER_SELECT_FIELDS,
-      where: WHERE_CLAUSE,
+      where,
     });
     res.status(200).json({
       status: "Success",
@@ -103,7 +94,7 @@ export async function updateUser(
   next: NextFunction
 ) {
   const { id } = req.params;
-  WHERE_CLAUSE.id = id;
+  const where: any = { id, deleted_at: null };
   const {
     remove_avatar,
     remove_banner,
@@ -126,8 +117,8 @@ export async function updateUser(
   const oldBannerPath = oldBannerName
     ? resolve(uploadsDir, "banner", oldBannerName)
     : null;
-  const newAvatarPath = resolve(uploadsDir, "avatar", newAvatarFile.fileName);
-  const newBannerPath = resolve(uploadsDir, "banner", newBannerFile.fileName);
+  const newAvatarPath = newAvatarFile ? resolve(uploadsDir, "avatar", newAvatarFile.fileName) : null;
+  const newBannerPath = newBannerFile ? resolve(uploadsDir, "banner", newBannerFile.fileName) : null;
   const dataToUpdate: Record<string, any> = {
     fullname,
     username,
@@ -136,13 +127,13 @@ export async function updateUser(
     headline,
   };
   try {
-    if (newAvatarFile) {
+    if (newAvatarFile && newAvatarPath) {
       await writeFile(newAvatarPath, newAvatarFile.fileBuffer);
       dataToUpdate.avatar_url = newAvatarFile.fileName;
     } else if (remove_avatar === "ok") {
       dataToUpdate.avatar_url = null;
     }
-    if (newBannerFile) {
+    if (newBannerFile && newBannerPath) {
       await writeFile(newBannerPath, newBannerFile.fileBuffer);
       dataToUpdate.banner_url = newBannerFile.fileName;
     } else if (remove_banner === "ok") {
@@ -150,7 +141,7 @@ export async function updateUser(
     }
     await prisma.user.update({
       data: dataToUpdate,
-      where: WHERE_CLAUSE,
+      where,
     });
     const filesToDelete: string[] = [];
     if ((remove_avatar === "ok" || newAvatarFile) && oldAvatarPath) {
@@ -163,10 +154,10 @@ export async function updateUser(
       filesToDelete.map((file) => unlink(file).catch(() => {}))
     );
     const sanitizeUser = await prisma.user.findUnique({
-      where: WHERE_CLAUSE,
+      where,
       select: USER_SELECT_FIELDS,
     });
-    return res.status(200).json({
+    res.status(200).json({
       status: "Success",
       message: "Update user success!",
       data: sanitizeUser,
@@ -188,7 +179,7 @@ export async function deleteUser(
   next: NextFunction
 ) {
   const { id } = req.params;
-  WHERE_CLAUSE.id = id;
+  const where: any = { id, deleted_at: null };
   const model = (req as any).model;
   const oldAvatarName = model?.avatar_url;
   const oldBannerName = model?.banner_url;
@@ -213,10 +204,10 @@ export async function deleteUser(
       updatedData.banner_url = newName;
     }
     const deletedUser = await prisma.user.update({
-      where: WHERE_CLAUSE,
+      where,
       data: updatedData,
     });
-    return res.status(200).json({
+    res.status(200).json({
       status: "Success",
       message: "User soft deleted successfully!",
       data: deletedUser,
@@ -232,8 +223,7 @@ export async function restoreUser(
   next: NextFunction
 ) {
   const { id } = req.params;
-  WHERE_CLAUSE.id = id;
-  WHERE_CLAUSE.deleted_at = { not: null };
+  const where: any = { id, deleted_at: { not: null } };
   const model = (req as any).model;
   const oldAvatarName = model?.avatar_url;
   const oldBannerName = model?.banner_url;
@@ -257,10 +247,10 @@ export async function restoreUser(
       updatedData.banner_url = newName;
     }
     const restoredUser = await prisma.user.update({
-      where: WHERE_CLAUSE,
+      where,
       data: updatedData,
     });
-    return res.status(200).json({
+    res.status(200).json({
       status: "Success",
       message: "User restored successfully!",
       data: restoredUser,

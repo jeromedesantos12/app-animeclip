@@ -3,8 +3,8 @@
 import { ReactNode, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
-import { fetchToken } from "../redux/slices";
-import type { AppDispatch, RootState } from "../redux/store";
+import { fetchToken } from "@/redux/slices";
+import type { AppDispatch, RootState } from "@/redux/store";
 import { Loading } from "@/components/loading";
 
 export function Public({ children }: { children: ReactNode }) {
@@ -20,7 +20,7 @@ export function Public({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (status === "succeeded" && data) {
-      router.replace("/");
+      router.replace("/generate");
     }
   }, [status, data, router]);
 

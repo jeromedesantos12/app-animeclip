@@ -22,7 +22,7 @@ export default function LoginPage() {
   const router = useRouter();
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL as string;
   const dispatch: AppDispatch = useDispatch();
-  // const [isSubmitting, setIsSubmitting] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -38,10 +38,11 @@ export default function LoginPage() {
   async function onSubmit(formData: LoginFormValues) {
     try {
       await loginAuth(formData);
+      toast.success("User login successfully!");
     } catch (err) {
       toast.error(extractAxiosError(err));
     } finally {
-      toast.success("User registered successfully!");
+      router.push("/generate");
       dispatch(fetchToken());
     }
   }

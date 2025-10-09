@@ -1,7 +1,3 @@
-export const WHERE_CLAUSE: any = {
-  deleted_at: null,
-};
-
 export const AUTH_SELECT_FIELDS = {
   id: true,
   username: true,

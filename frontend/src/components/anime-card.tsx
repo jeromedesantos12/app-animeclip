@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 export function AnimeCard({
@@ -7,6 +8,7 @@ export function AnimeCard({
   episode_title,
   clip_time,
   summary,
+  className,
 }: {
   title: string;
   image_url: string;
@@ -14,9 +16,15 @@ export function AnimeCard({
   episode_title: string;
   clip_time: string;
   summary: string;
+  className?: string;
 }) {
   return (
-    <div className="w-full md:w-[480px] shrink-0 h-fit bg-primary-foreground pb-8 rounded-xl flex flex-col gap-5 shadow-xl border">
+    <div
+      className={cn(
+        "w-full md:w-[480px] shrink-0 h-fit bg-primary-foreground pb-8 rounded-xl flex flex-col gap-5 shadow-xl border",
+        className
+      )}
+    >
       <Image
         className="rounded-t-lg w-full h-auto"
         src={image_url ?? ""}
@@ -27,18 +35,16 @@ export function AnimeCard({
         style={{ objectFit: "cover" }}
       />
       <div className="flex flex-col gap-2 px-5 ">
-        <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+        <h5 className="text-2xl font-bold tracking-tight text-foreground">
           {title}
         </h5>
-        <p className="font-normal text-gray-700 dark:text-gray-400">
+        <p className="font-normal text-secondary-foreground">
           Episode {episode_no}: {episode_title}
         </p>
-        <p className="font-normal text-gray-700 dark:text-gray-400">
+        <p className="font-normal text-secondary-foreground">
           Clip Time: {clip_time}
         </p>
-        <p className="font-normal text-gray-700 dark:text-gray-400">
-          {summary}
-        </p>
+        <p className="font-normal text-secondary-foreground">{summary}</p>
       </div>
     </div>
   );

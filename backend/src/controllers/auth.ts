@@ -5,7 +5,7 @@ import { appError } from "../utils/error";
 import { signToken } from "../utils/jwt";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
 import { authrizationUrl, oauth2Client } from "../utils/google";
-import { WHERE_CLAUSE, AUTH_SELECT_FIELDS } from "../utils/schema";
+import { AUTH_SELECT_FIELDS } from "../utils/schema";
 
 export function googleAuth(req: Request, res: Response, next: NextFunction) {
   res.redirect(authrizationUrl);
@@ -31,9 +31,10 @@ export async function googleCallback(
   ) {
     throw appError("Invalid credentials", 401);
   }
-  WHERE_CLAUSE.email = data.email;
   let user = await prisma.user.findUnique({
-    where: WHERE_CLAUSE,
+    where: {
+      email: data.email as string,
+    },
   });
   if (user === null) {
     user = await prisma.user.create({
@@ -69,13 +70,11 @@ export async function loginAuth(
 ) {
   try {
     const { emailOrUsername, password } = req.body;
-    WHERE_CLAUSE.provider = "EMAIL";
-    WHERE_CLAUSE.OR = [
-      { email: emailOrUsername },
-      { username: emailOrUsername },
-    ];
     const user = await prisma.user.findFirst({
-      where: WHERE_CLAUSE,
+      where: {
+        provider: "EMAIL",
+        OR: [{ email: emailOrUsername }, { username: emailOrUsername }],
+      },
     });
     if (user === null) {
       throw appError("Invalid email or username", 401);
@@ -132,10 +131,11 @@ export async function registerAuth(
 ) {
   try {
     const { fullname, username, email, password } = req.body;
-    WHERE_CLAUSE.OR = [{ email: email }, { username: username }];
     const hashedPassword = await hashPassword(password);
     const existingUser = await prisma.user.findFirst({
-      where: WHERE_CLAUSE,
+      where: {
+        OR: [{ email: email }, { username: username }],
+      },
     });
     if (existingUser) {
       if (existingUser.username === username) {
@@ -153,11 +153,11 @@ export async function registerAuth(
     const create = await prisma.user.create({
       data: dataToCreate,
     });
-    delete WHERE_CLAUSE.OR;
-    WHERE_CLAUSE.id = create.id;
     const register = await prisma.user.findUnique({
       select: AUTH_SELECT_FIELDS,
-      where: WHERE_CLAUSE,
+      where: {
+        id: create.id,
+      },
     });
     res.status(201).json({
       status: "Success",
@@ -193,7 +193,6 @@ export async function resetAuth(
 ) {
   try {
     const { id } = req.params;
-    WHERE_CLAUSE.id = id;
     const { password, newPassword } = req.body;
     const existingUser = (req as any).model;
     const isPasswordValid = await comparePassword(
@@ -208,7 +207,9 @@ export async function resetAuth(
       data: {
         password: hashedPassword,
       },
-      where: WHERE_CLAUSE,
+      where: {
+        id: id,
+      },
     });
     res.status(200).json({
       status: "Success",

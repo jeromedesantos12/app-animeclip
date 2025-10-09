@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { auth, isSame, isExist, isExistRestore } from "../middlewares/auth";
+import {
+  auth,
+  isExistPost,
+  isExistPostRestore,
+  isSameBody,
+} from "../middlewares/auth";
 import { isFiles, saveFiles } from "../middlewares/file";
 import { upload } from "../utils/multer";
 import {
@@ -22,7 +27,7 @@ router.post(
   saveFiles,
   createPost
 );
-router.put("/:id", auth, isSame, isExistRestore("post"), restorePost);
-router.delete("/:id", auth, isSame, isExist("post"), deletePost);
+router.put("/:id", auth, isExistPostRestore("post"), isSameBody, restorePost);
+router.delete("/:id", auth, isExistPost("post"), isSameBody, deletePost);
 
 export default router;

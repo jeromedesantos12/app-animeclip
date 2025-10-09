@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const MAX_FILE_SIZE = 5000000; // 5MB
+const MAX_FILE_SIZE = 5000000;
 const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
   "image/jpg",
@@ -12,13 +12,13 @@ export const GenerateImageSchema = z.object({
   image: z
     .any()
     .refine((files) => files?.length >= 1, {
-      message: "Harap unggah sebuah gambar.",
+      message: "Please upload an image.",
     })
     .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, {
-      message: `Ukuran file maksimal adalah 5MB.`,
+      message: `The maximum file size is 5MB.`,
     })
     .refine((files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type), {
-      message: "Hanya format .jpg, .jpeg, .png, dan .webp yang didukung.",
+      message: "Only .jpg, .jpeg, .png, and .webp formats are supported.",
     }),
 });
 

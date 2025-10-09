@@ -1,10 +1,8 @@
 import * as React from "react";
 import { KeyRound, Eye, EyeOff } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import { Input, type InputProps } from "./input";
 
-// Omit props that are fixed in this component
 export type PasswordInputProps = Omit<InputProps, "type" | "icon">;
 
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
@@ -23,7 +21,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
         <button
           type="button"
           onClick={() => setShowPassword((prev) => !prev)}
-          className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+          className="absolute top-1/2 -translate-y-1/2 right-4 text-muted-foreground hover:text-foreground"
           aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? (

@@ -13,6 +13,11 @@ export const baseAPI = axios.create({
   withCredentials: true,
 });
 
+export const outAPI = axios.create({
+  baseURL: "https://api.jikan.moe/v4",
+  withCredentials: true,
+});
+
 export function extractAxiosError(err: unknown): string | null {
   return axios.isAxiosError(err) && err.response
     ? err.response.data.message

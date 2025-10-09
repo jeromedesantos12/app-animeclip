@@ -13,6 +13,11 @@ export async function loginAuth(input: {
   return response.data.data;
 }
 
+export async function logoutAuth() {
+  const response = await baseAPI.post("/auth/logout");
+  return response.data.data;
+}
+
 export async function registerAuth(input: {
   fullname: string;
   username: string;

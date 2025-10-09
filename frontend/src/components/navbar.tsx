@@ -1,16 +1,62 @@
-// import defaultAvatar from "@/default-avatar.jpg";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LogOut, SearchCheck } from "lucide-react";
+import { Button } from "./button";
+import toast from "react-hot-toast";
+import { extractAxiosError } from "@/lib/axios";
+import { getUserById } from "@/queries/user";
+import { logoutAuth } from "@/queries/auth";
+import { fetchToken } from "@/redux/slices";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { UserType } from "@/types/user";
 
 export function Navbar() {
   const router = useRouter();
+  const dispatch: AppDispatch = useDispatch();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userById, setUserById] = useState<UserType | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
+  const { data } = useSelector((state: RootState) => state.token);
 
-  async function handleLogout() {}
+  async function handleLogout() {
+    setIsSubmitting(true);
+    try {
+      await logoutAuth();
+    } catch (err) {
+      toast.error(extractAxiosError(err));
+    } finally {
+      toast.success("User logout successfully!");
+      router.push("/login");
+      dispatch(fetchToken());
+      setIsSubmitting(false);
+    }
+  }
+
+  async function fetchUser(id: string) {
+    try {
+      const user = await getUserById(id);
+      setUserById(user);
+    } catch (err) {
+      toast.error(extractAxiosError(err));
+    }
+  }
+
+  useEffect(() => {
+    if (data) {
+      fetchUser(data.id);
+    }
+  }, [data]);
 
   return (
-    <div className="fixed flex justify-center top-0 bg-black shadow-2xl backdrop-blur-2xl w-full">
+    <div
+      className="fixed flex justify-center top-0 w-full z-50 h-24"
+      style={{
+        backgroundImage:
+          "linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0))",
+      }}
+    >
       <div className="flex justify-between gap-10 items-center w-full py-5 px-10">
         <div
           onClick={() => router.push("/")}
@@ -23,21 +69,22 @@ export function Navbar() {
           </div>
         </div>
         <div className="flex gap-5 justify-center items-center">
-          {/* <Image
-              onClick={() => router.push("/profile")}
-              src={base64Image || defaultAvatar}
-              alt={`Image of ${profile?.full_name || "user"}`}
-              width={50}
-              height={50}
-              className="w-10 h-10 rounded-full object-cover cursor-pointer"
-            /> */}
-          <button
+          <Image
+            onClick={() => router.push("/dashboard")}
+            src={base64Image || "/default-avatar.jpg"}
+            alt={`Image of ${userById?.fullname || "user"}`}
+            width={50}
+            height={50}
+            className="w-10 h-10 rounded-full object-cover cursor-pointer"
+          />
+          <Button
+            loading={isSubmitting}
+            className="rounded-full"
             onClick={handleLogout}
-            className="bg-blue-400 hover:bg-blue-300 duration-300 cursor-pointer text-black font-medium py-1 px-3 text-sm rounded-lg flex  justify-center not-only-of-type:items-center gap-2"
           >
             <LogOut />
             <p>Logout</p>
-          </button>
+          </Button>
         </div>
       </div>
     </div>
